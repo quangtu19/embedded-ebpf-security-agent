@@ -1,34 +1,45 @@
 #include <stdio.h>
-#include <unistd.h>
+#include <stdlib.h>
 #include <signal.h>
-#include <stdbool.h>
-
+#include <unistd.h>
 #include "event_logger.h"
+#include "config.h"
 
-static volatile bool running = true;
+static volatile sig_atomic_t stop_requested = 0;
 
-void handle_signal(int sig) {
+static void handle_signal(int sig)
+{
     (void)sig;
-    running = false;
+    stop_requested = 1;
 }
 
-int main(int argc, char **argv) {
-    (void)argc;
-    (void)argv;
+int main(int argc, char **argv)
+{
+    const char *config_path = "config/agent.yaml";
+    struct agent_config cfg;
 
     signal(SIGINT, handle_signal);
     signal(SIGTERM, handle_signal);
 
-    if (logger_init("events.log") != 0) {
-        fprintf(stderr, "Failed to initialize logger\n");
+    if (argc == 3 && strcmp(argv[1], "-c") == 0) {
+        config_path = argv[2];
+    }
+
+    if (config_load(config_path, &cfg) != 0) {
+        fprintf(stderr, "Failed to load config: %s\n", config_path);
+        return 1;
+    }
+
+    if (logger_init(cfg.log_path) != 0) {
+        fprintf(stderr, "Failed to initialize logger: %s\n", cfg.log_path);
         return 1;
     }
 
     logger_write("{\"event_type\":\"AGENT_STARTED\",\"severity\":\"INFO\"}");
 
-    while (running) {
+    while (!stop_requested) {
         logger_write("{\"event_type\":\"HEARTBEAT\",\"severity\":\"INFO\"}");
-        sleep(5);
+        sleep(cfg.heartbeat_interval_sec);
     }
 
     logger_write("{\"event_type\":\"AGENT_STOPPED\",\"severity\":\"INFO\"}");
