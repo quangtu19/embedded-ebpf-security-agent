@@ -1,8 +1,10 @@
+cat > src/main.c <<'EOF'
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
 #include <unistd.h>
 #include <string.h>
+
 #include "event_logger.h"
 #include "config.h"
 
@@ -48,3 +50,4 @@ int main(int argc, char **argv)
 
     return 0;
 }
+EOF
