@@ -1,11 +1,16 @@
 CC=gcc
-CFLAGS=-Wall -Wextra -O2 -Iinclude
+CFLAGS=-Wall -Wextra -O2 -g -Iinclude
 
-TARGET=ebpf-security-agent
-SRC=src/main.c src/event_logger.c
+APP=ebpf-security-agent
+SRC=src/main.c src/event_logger.c src/config_loader.c
 
-all:
-	$(CC) $(CFLAGS) $(SRC) -o $(TARGET)
+all: $(APP)
+
+$(APP): $(SRC)
+	$(CC) $(CFLAGS) -o $@ $(SRC)
 
 clean:
-	rm -f $(TARGET) events.log
+	rm -f $(APP)
+	rm -f events.log
+
+.PHONY: all clean
