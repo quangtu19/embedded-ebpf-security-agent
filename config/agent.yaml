@@ -1,0 +1,4 @@
+agent:
+  log_path: events.log
+  heartbeat_interval_sec:5
+
