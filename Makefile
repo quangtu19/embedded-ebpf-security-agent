@@ -1,3 +1,4 @@
+cat > Makefile <<'EOF'
 CC=gcc
 CFLAGS=-Wall -Wextra -O2 -g -Iinclude
 
@@ -12,5 +13,7 @@ $(APP): $(SRC)
 clean:
 	rm -f $(APP)
 	rm -f events.log
+	rm -f build.log
 
 .PHONY: all clean
+EOF
