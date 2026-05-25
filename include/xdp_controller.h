@@ -12,6 +12,7 @@ struct xdp_stats {
     uint64_t other;
     uint64_t total_packets;
     uint64_t total_bytes;
+    uint64_t dropped;
 };
 
 struct xdp_controller {
@@ -20,6 +21,7 @@ struct xdp_controller {
     unsigned int xdp_flags;
     int protocol_map_fd;
     int packet_map_fd;
+    int blacklist_map_fd;
     int attached;
 };
 
