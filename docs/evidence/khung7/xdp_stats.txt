@@ -1,0 +1,31 @@
+packet_count_map id=5
+[{
+        "key": 0,
+        "value": 19
+    },{
+        "key": 1,
+        "value": 1710
+    },{
+        "key": 2,
+        "value": 10
+    }
+]
+
+protocol_count_map id=6
+[{
+        "key": 0,
+        "value": 0
+    },{
+        "key": 1,
+        "value": 0
+    },{
+        "key": 2,
+        "value": 15
+    },{
+        "key": 3,
+        "value": 4
+    }
+]
+
+blacklist_map id=7
+[]
