@@ -19,7 +19,6 @@ static void handle_signal(int sig)
 int main(int argc, char **argv)
 {
     const char *config_path = "config/agent.yaml";
-    const char *bpf_object_path = "bpf/exec_trace.bpf.o";
     struct agent_config cfg;
     int heartbeat_elapsed_ms = 0;
 
@@ -42,13 +41,14 @@ int main(int argc, char **argv)
 
     logger_write("{\"event_type\":\"AGENT_STARTED\",\"severity\":\"INFO\"}");
 
-    if (ebpf_loader_start(bpf_object_path) != 0) {
+    if (ebpf_loader_start() != 0) {
         logger_write("{\"event_type\":\"BPF_LOAD_FAILED\",\"severity\":\"CRITICAL\"}");
         logger_close();
         return 1;
     }
 
     logger_write("{\"event_type\":\"BPF_LOADED\",\"severity\":\"INFO\",\"program\":\"exec_trace\"}");
+    logger_write("{\"event_type\":\"BPF_LOADED\",\"severity\":\"INFO\",\"program\":\"tcp_connect\"}");
 
     while (!stop_requested) {
         ebpf_loader_poll(500);
