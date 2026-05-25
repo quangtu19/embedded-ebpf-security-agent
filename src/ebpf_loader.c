@@ -65,11 +65,14 @@ int ebpf_loader_poll(int timeout_ms)
     }
 
     err = ring_buffer__poll(g_rb, timeout_ms);
-    if (err < 0) {
-        fprintf(stderr, "ring_buffer__poll failed: %d\n", err);
-        return err;
-    }
+if (err == -EINTR) {
+    return 0;
+}
 
+if (err < 0) {
+    fprintf(stderr, "ring_buffer__poll failed: %d\n", err);
+    return err;
+}
     return 0;
 }
 
