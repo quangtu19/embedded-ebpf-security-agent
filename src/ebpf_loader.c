@@ -75,7 +75,7 @@ int ebpf_loader_start(void)
         return -1;
     }
 
-    if (load_module(&g_tcp, "bpf/tcp_connect.bpf.o", "handle_tcp_v4_connect", 1) != 0) {
+    if (load_module(&g_tcp, "bpf/tcp_connect.bpf.o", "handle_tcp_connect", 1) != 0) {
         return -1;
     }
 

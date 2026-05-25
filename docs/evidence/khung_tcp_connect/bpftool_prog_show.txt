@@ -1,0 +1,3 @@
+2: prog_array  name hid_jmp_table  flags 0x0
+	key 4B  value 4B  max_entries 1024  memlock 8576B
+	owner_prog_type tracing  owner jited

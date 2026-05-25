@@ -1,0 +1,1 @@
+{"event_type":"SUSPICIOUS_CONNECT","severity":"WARNING","component":"network","pid":3423,"uid":1000,"comm":"nc","dst_ip":"1.1.1.1","dst_port":4444,"protocol":"tcp","reason":"suspicious_port","ts_ns":36056940568657}

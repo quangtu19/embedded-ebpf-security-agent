@@ -1,0 +1,12 @@
+{"event_type":"TCP_CONNECT","severity":"INFO","component":"network","pid":3416,"uid":1000,"comm":"curl","dst_ip":"127.0.0.53","dst_port":53,"protocol":"tcp","ts_ns":36018683504205}
+{"event_type":"TCP_CONNECT","severity":"INFO","component":"network","pid":3416,"uid":1000,"comm":"curl","dst_ip":"104.20.23.154","dst_port":80,"protocol":"tcp","ts_ns":36018684928706}
+{"event_type":"TCP_CONNECT","severity":"INFO","component":"network","pid":3416,"uid":1000,"comm":"curl","dst_ip":"172.66.147.243","dst_port":80,"protocol":"tcp","ts_ns":36018684941453}
+{"event_type":"TCP_CONNECT","severity":"INFO","component":"network","pid":3416,"uid":1000,"comm":"curl","dst_ip":"104.20.23.154","dst_port":80,"protocol":"tcp","ts_ns":36018686527775}
+{"event_type":"TCP_CONNECT","severity":"INFO","component":"network","pid":3418,"uid":1000,"comm":"curl","dst_ip":"127.0.0.53","dst_port":53,"protocol":"tcp","ts_ns":36022658527103}
+{"event_type":"TCP_CONNECT","severity":"INFO","component":"network","pid":3418,"uid":1000,"comm":"curl","dst_ip":"142.250.197.110","dst_port":443,"protocol":"tcp","ts_ns":36022661511838}
+{"event_type":"TCP_CONNECT","severity":"INFO","component":"network","pid":3418,"uid":1000,"comm":"curl","dst_ip":"142.250.197.110","dst_port":443,"protocol":"tcp","ts_ns":36022662009494}
+{"event_type":"TCP_CONNECT","severity":"INFO","component":"network","pid":3420,"uid":1000,"comm":"nc","dst_ip":"127.0.0.53","dst_port":53,"protocol":"tcp","ts_ns":36035585038194}
+{"event_type":"TCP_CONNECT","severity":"INFO","component":"network","pid":3420,"uid":1000,"comm":"nc","dst_ip":"172.66.147.243","dst_port":80,"protocol":"tcp","ts_ns":36035586777685}
+{"event_type":"TCP_CONNECT","severity":"INFO","component":"network","pid":3420,"uid":1000,"comm":"nc","dst_ip":"104.20.23.154","dst_port":80,"protocol":"tcp","ts_ns":36035586790448}
+{"event_type":"TCP_CONNECT","severity":"INFO","component":"network","pid":3420,"uid":1000,"comm":"nc","dst_ip":"172.66.147.243","dst_port":80,"protocol":"tcp","ts_ns":36035586857715}
+{"event_type":"TCP_CONNECT","severity":"INFO","component":"network","pid":3421,"uid":1000,"comm":"nc","dst_ip":"1.1.1.1","dst_port":443,"protocol":"tcp","ts_ns":36048514147341}
