@@ -1,35 +1,35 @@
-CC=gcc
-CLANG=clang
+CC ?= gcc
+CLANG ?= clang
 
-CFLAGS=-Wall -Wextra -O2 -g -Iinclude
-BPF_CFLAGS=-O2 -g -target bpf -D__TARGET_ARCH_x86 -Wall -Iinclude -I/usr/include/$(shell uname -m)-linux-gnu
+APP := ebpf-security-agent
 
-APP=ebpf-security-agent
+APP_SRC := \
+	src/main.c \
+	src/event_logger.c \
+	src/config_loader.c \
+	src/xdp_controller.c
 
-USER_SRC=src/main.c \
-         src/event_logger.c \
-         src/config_loader.c \
-         src/ebpf_loader.c \
-         src/ringbuf_reader.c
+BPF_SRC := bpf/xdp_filter.bpf.c
+BPF_OBJ := bpf/xdp_filter.bpf.o
 
-BPF_OBJS=bpf/exec_trace.bpf.o bpf/tcp_connect.bpf.o
+CFLAGS := -Wall -Wextra -O2 -g -Iinclude $(shell pkg-config --cflags libbpf 2>/dev/null)
+LDLIBS := $(shell pkg-config --libs libbpf 2>/dev/null || echo -lbpf -lelf -lz)
 
-LDFLAGS=-lbpf -lelf -lz
+BPF_CFLAGS := -O2 -g -target bpf \
+	-I./bpf \
+	-I/usr/include/$(shell uname -m)-linux-gnu
 
-all: $(APP) $(BPF_OBJS)
+all: $(BPF_OBJ) $(APP)
 
-$(APP): $(USER_SRC)
-	$(CC) $(CFLAGS) -o $@ $(USER_SRC) $(LDFLAGS)
+$(APP): $(APP_SRC) include/*.h
+	$(CC) $(CFLAGS) -o $@ $(APP_SRC) $(LDLIBS)
 
-bpf/exec_trace.bpf.o: bpf/exec_trace.bpf.c bpf/common.bpf.h
-	$(CLANG) $(BPF_CFLAGS) -c bpf/exec_trace.bpf.c -o bpf/exec_trace.bpf.o
-
-bpf/tcp_connect.bpf.o: bpf/tcp_connect.bpf.c bpf/common.bpf.h
-	$(CLANG) $(BPF_CFLAGS) -c bpf/tcp_connect.bpf.c -o bpf/tcp_connect.bpf.o
+$(BPF_OBJ): $(BPF_SRC) bpf/common.bpf.h
+	$(CLANG) $(BPF_CFLAGS) -c $(BPF_SRC) -o $(BPF_OBJ)
 
 clean:
 	rm -f $(APP)
-	rm -f $(BPF_OBJS)
+	rm -f $(BPF_OBJ)
 	rm -f events.log
 	rm -f build.log
 
