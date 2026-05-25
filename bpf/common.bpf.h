@@ -16,6 +16,7 @@
 
 #define STAT_TOTAL_PACKETS 0
 #define STAT_TOTAL_BYTES   1
+#define STAT_DROPPED       2
 
 struct proc_exec_event {
     __u64 ts_ns;
