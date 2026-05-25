@@ -1,4 +1,3 @@
-cat > src/config_loader.c <<'EOF'
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -39,7 +38,6 @@ int config_load(const char *path, struct agent_config *cfg)
 
             if (value != NULL) {
                 value++;
-
                 while (*value == ' ') {
                     value++;
                 }
@@ -54,13 +52,11 @@ int config_load(const char *path, struct agent_config *cfg)
 
             if (value != NULL) {
                 value++;
-
                 while (*value == ' ') {
                     value++;
                 }
 
                 cfg->heartbeat_interval_sec = atoi(value);
-
                 if (cfg->heartbeat_interval_sec <= 0) {
                     cfg->heartbeat_interval_sec = 5;
                 }
@@ -71,4 +67,3 @@ int config_load(const char *path, struct agent_config *cfg)
     fclose(fp);
     return 0;
 }
-EOF
