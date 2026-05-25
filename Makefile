@@ -1,4 +1,3 @@
-cat > Makefile <<'EOF'
 CC=gcc
 CFLAGS=-Wall -Wextra -O2 -g -Iinclude
 
@@ -16,4 +15,3 @@ clean:
 	rm -f build.log
 
 .PHONY: all clean
-EOF
