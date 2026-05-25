@@ -6,6 +6,7 @@
 
 #include "event_logger.h"
 #include "config.h"
+#include "ebpf_loader.h"
 
 static volatile sig_atomic_t stop_requested = 0;
 
@@ -18,7 +19,9 @@ static void handle_signal(int sig)
 int main(int argc, char **argv)
 {
     const char *config_path = "config/agent.yaml";
+    const char *bpf_object_path = "bpf/exec_trace.bpf.o";
     struct agent_config cfg;
+    int heartbeat_elapsed_ms = 0;
 
     signal(SIGINT, handle_signal);
     signal(SIGTERM, handle_signal);
@@ -39,12 +42,27 @@ int main(int argc, char **argv)
 
     logger_write("{\"event_type\":\"AGENT_STARTED\",\"severity\":\"INFO\"}");
 
+    if (ebpf_loader_start(bpf_object_path) != 0) {
+        logger_write("{\"event_type\":\"BPF_LOAD_FAILED\",\"severity\":\"CRITICAL\"}");
+        logger_close();
+        return 1;
+    }
+
+    logger_write("{\"event_type\":\"BPF_LOADED\",\"severity\":\"INFO\",\"program\":\"exec_trace\"}");
+
     while (!stop_requested) {
-        logger_write("{\"event_type\":\"HEARTBEAT\",\"severity\":\"INFO\"}");
-        sleep(cfg.heartbeat_interval_sec);
+        ebpf_loader_poll(500);
+
+        heartbeat_elapsed_ms += 500;
+        if (heartbeat_elapsed_ms >= cfg.heartbeat_interval_sec * 1000) {
+            logger_write("{\"event_type\":\"HEARTBEAT\",\"severity\":\"INFO\"}");
+            heartbeat_elapsed_ms = 0;
+        }
     }
 
     logger_write("{\"event_type\":\"AGENT_STOPPED\",\"severity\":\"INFO\"}");
+
+    ebpf_loader_stop();
     logger_close();
 
     return 0;
