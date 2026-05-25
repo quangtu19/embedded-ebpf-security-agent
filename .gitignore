@@ -1,10 +1,10 @@
 ebpf-security-agent
 events.log
+build.log
 *.log
 *.o
 *.bpf.o
 *.skel.h
 *.tmp
 *.swp
-*.~
-
+*~
