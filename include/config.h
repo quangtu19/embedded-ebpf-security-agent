@@ -1,4 +1,3 @@
-cat > include/config.h <<'EOF'
 #ifndef AGENT_CONFIG_H
 #define AGENT_CONFIG_H
 
@@ -10,4 +9,3 @@ struct agent_config {
 int config_load(const char *path, struct agent_config *cfg);
 
 #endif
-EOF
