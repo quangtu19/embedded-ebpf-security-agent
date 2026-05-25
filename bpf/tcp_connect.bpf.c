@@ -2,18 +2,30 @@
 #include <linux/in.h>
 #include <linux/socket.h>
 #include <bpf/bpf_helpers.h>
-#include <bpf/bpf_tracing.h>
 #include <bpf/bpf_endian.h>
 
 #include "common.bpf.h"
+
+#ifndef AF_INET
+#define AF_INET 2
+#endif
+
+struct trace_event_raw_sys_enter {
+    unsigned short common_type;
+    unsigned char common_flags;
+    unsigned char common_preempt_count;
+    int common_pid;
+    long id;
+    unsigned long args[6];
+};
 
 struct {
     __uint(type, BPF_MAP_TYPE_RINGBUF);
     __uint(max_entries, 256 * 1024);
 } events SEC(".maps");
 
-SEC("kprobe/tcp_v4_connect")
-int handle_tcp_v4_connect(struct pt_regs *ctx)
+SEC("tracepoint/syscalls/sys_enter_connect")
+int handle_tcp_connect(struct trace_event_raw_sys_enter *ctx)
 {
     struct tcp_connect_event *e;
     struct sockaddr_in addr = {};
@@ -22,7 +34,7 @@ int handle_tcp_v4_connect(struct pt_regs *ctx)
     __u64 uid_gid;
     __u16 dport;
 
-    uaddr = (void *)PT_REGS_PARM2(ctx);
+    uaddr = (void *)ctx->args[1];
     if (!uaddr) {
         return 0;
     }
@@ -42,7 +54,6 @@ int handle_tcp_v4_connect(struct pt_regs *ctx)
 
     pid_tgid = bpf_get_current_pid_tgid();
     uid_gid = bpf_get_current_uid_gid();
-
     dport = bpf_ntohs(addr.sin_port);
 
     e->event_type = EVENT_TCP_CONNECT;
