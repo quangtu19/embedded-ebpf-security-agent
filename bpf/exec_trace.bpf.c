@@ -1,5 +1,7 @@
-#include "common.bpf.h"
+#include <linux/bpf.h>
 #include <bpf/bpf_helpers.h>
+
+#include "common.bpf.h"
 
 struct {
     __uint(type, BPF_MAP_TYPE_RINGBUF);
