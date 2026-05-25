@@ -75,6 +75,7 @@ int xdp_controller_init(
     memset(ctl, 0, sizeof(*ctl));
     ctl->protocol_map_fd = -1;
     ctl->packet_map_fd = -1;
+    ctl->blacklist_map_fd = -1;
 
     if (bump_memlock_rlimit() != 0)
         return -1;
@@ -125,8 +126,13 @@ int xdp_controller_init(
     ctl->packet_map_fd =
         bpf_object__find_map_fd_by_name(ctl->obj, "packet_count_map");
 
-    if (ctl->protocol_map_fd < 0 || ctl->packet_map_fd < 0) {
-        fprintf(stderr, "xdp_controller_init: failed to find counter maps\n");
+    ctl->blacklist_map_fd =
+        bpf_object__find_map_fd_by_name(ctl->obj, "blacklist_map");
+
+    if (ctl->protocol_map_fd < 0 ||
+        ctl->packet_map_fd < 0 ||
+        ctl->blacklist_map_fd < 0) {
+        fprintf(stderr, "xdp_controller_init: failed to find XDP maps\n");
         bpf_object__close(ctl->obj);
         ctl->obj = NULL;
         return -1;
@@ -168,13 +174,16 @@ int xdp_controller_read_stats(
     stats->total_bytes =
         read_u64_counter(ctl->packet_map_fd, STAT_TOTAL_BYTES);
 
+    stats->dropped =
+        read_u64_counter(ctl->packet_map_fd, STAT_DROPPED);
+
     return 0;
 }
 
 int xdp_controller_log_stats(struct xdp_controller *ctl)
 {
     struct xdp_stats stats;
-    char line[512];
+    char line[640];
 
     if (xdp_controller_read_stats(ctl, &stats) != 0)
         return -1;
@@ -190,13 +199,15 @@ int xdp_controller_log_stats(struct xdp_controller *ctl)
         "\"icmp\":%llu,"
         "\"other\":%llu,"
         "\"total_packets\":%llu,"
-        "\"total_bytes\":%llu}",
+        "\"total_bytes\":%llu,"
+        "\"dropped\":%llu}",
         (unsigned long long)stats.tcp,
         (unsigned long long)stats.udp,
         (unsigned long long)stats.icmp,
         (unsigned long long)stats.other,
         (unsigned long long)stats.total_packets,
-        (unsigned long long)stats.total_bytes
+        (unsigned long long)stats.total_bytes,
+        (unsigned long long)stats.dropped
     );
 
     return logger_write(line);
