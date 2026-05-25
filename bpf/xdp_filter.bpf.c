@@ -17,10 +17,17 @@ struct {
 
 struct {
     __uint(type, BPF_MAP_TYPE_ARRAY);
-    __uint(max_entries, 2);
+    __uint(max_entries, 3);
     __type(key, __u32);
     __type(value, __u64);
 } packet_count_map SEC(".maps");
+
+struct {
+    __uint(type, BPF_MAP_TYPE_HASH);
+    __uint(max_entries, 1024);
+    __type(key, __u32);
+    __type(value, __u8);
+} blacklist_map SEC(".maps");
 
 static __always_inline void inc_counter(void *map, __u32 key, __u64 delta)
 {
@@ -67,6 +74,14 @@ int xdp_packet_counter(struct xdp_md *ctx)
         inc_counter(&protocol_count_map, PROTO_ICMP, 1);
     } else {
         inc_counter(&protocol_count_map, PROTO_OTHER, 1);
+    }
+
+    __u32 src_ip = iph->saddr;
+    __u8 *blocked = bpf_map_lookup_elem(&blacklist_map, &src_ip);
+
+    if (blocked) {
+        inc_counter(&packet_count_map, STAT_DROPPED, 1);
+        return XDP_DROP;
     }
 
     return XDP_PASS;
