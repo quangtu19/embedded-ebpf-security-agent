@@ -9,6 +9,14 @@
 #define EVENT_TCP_CONNECT 2
 #define EVENT_SUSPICIOUS_CONNECT 3
 
+#define PROTO_TCP    0
+#define PROTO_UDP    1
+#define PROTO_ICMP   2
+#define PROTO_OTHER  3
+
+#define STAT_TOTAL_PACKETS 0
+#define STAT_TOTAL_BYTES   1
+
 struct proc_exec_event {
     __u64 ts_ns;
     __u32 pid;
