@@ -1,0 +1,16 @@
+● ebpf-security-agent.service - eBPF/XDP Security Telemetry Agent
+     Loaded: loaded (/etc/systemd/system/ebpf-security-agent.service; enabled; preset: enabled)
+     Active: active (running) since Tue 2026-05-26 02:52:01 UTC; 18min ago
+    Process: 2169 ExecStartPre=/bin/sh -c mountpoint -q /sys/fs/bpf || mount -t bpf bpf /sys/fs/bpf (code=exited, status=0/SUCCESS)
+    Process: 2171 ExecStartPre=/bin/sh -c mkdir -p /sys/fs/bpf/ebpf-security-agent /var/log/ebpf-security-agent /run/ebpf-security-agent (code=exited, status=0/SUCCESS)
+    Process: 2174 ExecStartPre=/bin/sh -c ip link set dev enp0s8 up 2>/dev/null || true (code=exited, status=0/SUCCESS)
+    Process: 2177 ExecStartPre=/bin/sh -c ip link set dev enp0s8 xdpgeneric off 2>/dev/null || true; ip link set dev enp0s8 xdp off 2>/dev/null || true (code=exited, status=0/SUCCESS)
+   Main PID: 2182 (ebpf-security-a)
+      Tasks: 1 (limit: 4655)
+     Memory: 436.0K (peak: 1.7M)
+        CPU: 206ms
+     CGroup: /system.slice/ebpf-security-agent.service
+             └─2182 /opt/ebpf-security-agent/bin/ebpf-security-agent -c /etc/ebpf-security-agent/agent.yaml
+
+May 26 02:52:01 ebpf-target systemd[1]: Starting ebpf-security-agent.service - eBPF/XDP Security Telemetry Agent...
+May 26 02:52:01 ebpf-target systemd[1]: Started ebpf-security-agent.service - eBPF/XDP Security Telemetry Agent.

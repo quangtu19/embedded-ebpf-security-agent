@@ -1,0 +1,21 @@
+2: prog_array  name hid_jmp_table  flags 0x0
+	key 4B  value 4B  max_entries 1024  memlock 8576B
+	owner_prog_type tracing  owner jited
+8: array  name packet_count_ma  flags 0x0
+	key 4B  value 8B  max_entries 3  memlock 408B
+	btf_id 104
+9: array  name protocol_count_  flags 0x0
+	key 4B  value 8B  max_entries 4  memlock 416B
+	btf_id 104
+10: hash  name blacklist_map  flags 0x0
+	key 4B  value 1B  max_entries 1024  memlock 83296B
+	btf_id 104
+11: array  name packet_count_ma  flags 0x0
+	key 4B  value 8B  max_entries 3  memlock 408B
+	btf_id 114
+12: array  name protocol_count_  flags 0x0
+	key 4B  value 8B  max_entries 4  memlock 416B
+	btf_id 114
+13: hash  name blacklist_map  flags 0x0
+	key 4B  value 1B  max_entries 1024  memlock 83296B
+	btf_id 114
