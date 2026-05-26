@@ -1,121 +1,45 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-LOG="/var/log/ebpf-security-agent/events.log"
-OUT="docs/evidence/khung10/benchmarks/exec_loss_result.txt"
-EXPECTED=1000
+BASE="docs/evidence/khung10"
+OUT="$BASE/benchmarks/idle_result.txt"
+AGENT_NAME="ebpf-security-agent"
 
 mkdir -p "$(dirname "$OUT")"
 
-BEFORE=$(grep -c 'PROC_EXEC' "$LOG" 2>/dev/null || true)
-
-for i in $(seq 1 "$EXPECTED"); do
-  /bin/true
-done
-
-sleep 2
-
-AFTER=$(grep -c 'PROC_EXEC' "$LOG" 2>/dev/null || true)
-OBSERVED=$((AFTER - BEFORE))
-LOSS=$((EXPECTED - OBSERVED))
+PID="$(pidof "$AGENT_NAME" | awk '{print $1}' || true)"
 
 {
-  echo "=== PROC_EXEC event loss benchmark ==="
-  date
-  echo "expected=$EXPECTED"
-  echo "observed=$OBSERVED"
-  echo "loss=$LOSS"
-  awk -v e="$EXPECTED" -v o="$OBSERVED" 'BEGIN { printf "loss_rate=%.2f%%\n", ((e-o)/e)*100 }'
-} | tee "$OUT"
-EOF
+  echo "=== KHUNG 10 - CPU/RAM idle benchmark ==="
+  date -Is
+  echo
 
-cat > scripts/benchmark_tcp_loss.sh <<'EOF'
-#!/usr/bin/env bash
-set -euo pipefail
-
-LOG="/var/log/ebpf-security-agent/events.log"
-OUT="docs/evidence/khung10/benchmarks/tcp_loss_result.txt"
-EXPECTED=100
-TARGET="http://example.com"
-
-mkdir -p "$(dirname "$OUT")"
-
-BEFORE=$(grep -c 'TCP_CONNECT' "$LOG" 2>/dev/null || true)
-
-for i in $(seq 1 "$EXPECTED"); do
-  curl -s -o /dev/null --max-time 5 "$TARGET" || true
-done
-
-sleep 2
-
-AFTER=$(grep -c 'TCP_CONNECT' "$LOG" 2>/dev/null || true)
-OBSERVED=$((AFTER - BEFORE))
-LOSS=$((EXPECTED - OBSERVED))
-
-{
-  echo "=== TCP_CONNECT event loss benchmark ==="
-  date
-  echo "target=$TARGET"
-  echo "expected=$EXPECTED"
-  echo "observed=$OBSERVED"
-  echo "loss=$LOSS"
-  awk -v e="$EXPECTED" -v o="$OBSERVED" 'BEGIN { printf "loss_rate=%.2f%%\n", ((e-o)/e)*100 }'
-} | tee "$OUT"
-EOF
-
-cat > scripts/benchmark_xdp_counter.sh <<'EOF'
-#!/usr/bin/env bash
-set -euo pipefail
-
-OUT="docs/evidence/khung10/benchmarks/xdp_counter_result.txt"
-mkdir -p "$(dirname "$OUT")"
-
-{
-  echo "=== XDP counter benchmark ==="
-  date
-
-  echo "--- stats before ---"
-  sudo ./ebpf-agentctl stats || true
-
-  echo "--- generate ping traffic ---"
-  ping -c 20 8.8.8.8 || true
-
-  sleep 2
-
-  echo "--- stats after ---"
-  sudo ./ebpf-agentctl stats || true
-
-  echo "--- bpftool map show ---"
-  sudo bpftool map show || true
-} | tee "$OUT"
-EOF
-
-cat > scripts/test_recovery.sh <<'EOF'
-#!/usr/bin/env bash
-set -euo pipefail
-
-OUT="docs/evidence/khung10/recovery/recovery_result.txt"
-mkdir -p "$(dirname "$OUT")"
-
-{
-  echo "=== Recovery test ==="
-  date
-
-  echo "--- status before kill ---"
-  systemctl status ebpf-security-agent --no-pager || true
-
-  PID=$(pidof ebpf-security-agent || true)
-  echo "PID=$PID"
-
-  if [ -n "$PID" ]; then
-    sudo kill -9 "$PID"
+  if [ -z "${PID}" ]; then
+    echo "ERROR: $AGENT_NAME is not running"
+    echo "Run first: sudo systemctl start ebpf-security-agent"
+    exit 1
   fi
 
-  sleep 5
+  echo "PID=$PID"
+  echo
 
-  echo "--- status after kill ---"
-  systemctl status ebpf-security-agent --no-pager || true
+  echo "--- ps RSS/VSZ/CPU/MEM ---"
+  ps -o pid,ppid,%cpu,%mem,rss,vsz,comm -p "$PID" || true
+  echo
 
-  echo "--- recent journal ---"
-  journalctl -u ebpf-security-agent -n 80 --no-pager || true
+  echo "--- top snapshot ---"
+  top -b -n 1 -p "$PID" | head -n 20 || true
+  echo
+
+  echo "--- pidstat 1s x 30 ---"
+  if command -v pidstat >/dev/null 2>&1; then
+    pidstat -p "$PID" 1 30 || true
+  else
+    echo "SKIP: pidstat not found. Install: sudo apt install -y sysstat"
+  fi
+
+  echo
+  echo "Target:"
+  echo "- CPU idle overhead: < 5%"
+  echo "- Memory RSS: < 100 MB"
 } | tee "$OUT"
