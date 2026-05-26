@@ -1,57 +1,42 @@
 #include "config.h"
 
-#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 
-static char *ltrim(char *s)
-{
-    while (*s && isspace((unsigned char)*s))
-        s++;
-    return s;
-}
-
-static void rtrim(char *s)
+static void trim_newline(char *s)
 {
     size_t len = strlen(s);
 
-    while (len > 0 && isspace((unsigned char)s[len - 1])) {
+    while (len > 0 && (s[len - 1] == '\n' || s[len - 1] == '\r')) {
         s[len - 1] = '\0';
         len--;
     }
 }
 
-static int parse_bool(const char *s)
+static char *value_after_colon(char *line)
 {
-    if (s == NULL)
-        return 0;
+    char *value = strchr(line, ':');
 
-    if (strcmp(s, "true") == 0)
-        return 1;
+    if (!value)
+        return NULL;
 
-    if (strcmp(s, "yes") == 0)
-        return 1;
+    value++;
+    while (*value == ' ' || *value == '\t')
+        value++;
 
-    if (strcmp(s, "1") == 0)
-        return 1;
-
-    return 0;
+    return value;
 }
 
-static void set_default_config(struct agent_config *cfg)
+static int parse_bool(const char *s)
 {
-    memset(cfg, 0, sizeof(*cfg));
+    if (!s)
+        return 0;
 
-    strncpy(cfg->log_path, "events.log", sizeof(cfg->log_path) - 1);
-    cfg->heartbeat_interval_sec = 5;
-
-    cfg->xdp_enable = 0;
-    strncpy(cfg->xdp_interface, "enp0s8", sizeof(cfg->xdp_interface) - 1);
-    strncpy(cfg->xdp_mode, "skb", sizeof(cfg->xdp_mode) - 1);
-    strncpy(cfg->xdp_object_path, "bpf/xdp_filter.bpf.o",
-            sizeof(cfg->xdp_object_path) - 1);
-    cfg->xdp_stats_interval_sec = 5;
+    return strcasecmp(s, "true") == 0 ||
+           strcmp(s, "1") == 0 ||
+           strcasecmp(s, "yes") == 0;
 }
 
 int config_load(const char *path, struct agent_config *cfg)
@@ -59,62 +44,47 @@ int config_load(const char *path, struct agent_config *cfg)
     FILE *fp;
     char line[512];
 
-    if (path == NULL || cfg == NULL)
+    if (!path || !cfg)
         return -1;
 
-    set_default_config(cfg);
+    memset(cfg, 0, sizeof(*cfg));
+
+    strncpy(cfg->log_path, "/var/log/ebpf-security-agent/events.log", sizeof(cfg->log_path) - 1);
+    cfg->heartbeat_interval_sec = 5;
+
+    cfg->xdp_enable = 1;
+    strncpy(cfg->xdp_interface, "enp0s3", sizeof(cfg->xdp_interface) - 1);
+    strncpy(cfg->xdp_mode, "skb", sizeof(cfg->xdp_mode) - 1);
+    strncpy(cfg->xdp_object_path, "/opt/ebpf-security-agent/bpf/xdp_filter.bpf.o", sizeof(cfg->xdp_object_path) - 1);
+    cfg->xdp_stats_interval_sec = 5;
 
     fp = fopen(path, "r");
-    if (fp == NULL)
+    if (!fp)
         return -1;
 
-    while (fgets(line, sizeof(line), fp) != NULL) {
-        char *p;
-        char *key;
+    while (fgets(line, sizeof(line), fp)) {
         char *value;
 
-        p = strchr(line, '#');
-        if (p)
-            *p = '\0';
-
-        rtrim(line);
-        key = ltrim(line);
-
-        if (*key == '\0')
+        trim_newline(line);
+        value = value_after_colon(line);
+        if (!value)
             continue;
 
-        p = strchr(key, ':');
-        if (!p)
-            continue;
-
-        *p = '\0';
-        value = ltrim(p + 1);
-        rtrim(key);
-        rtrim(value);
-
-        if (*value == '\0')
-            continue;
-
-        if (strcmp(key, "log_path") == 0) {
+        if (strstr(line, "log_path:")) {
             strncpy(cfg->log_path, value, sizeof(cfg->log_path) - 1);
-            cfg->log_path[sizeof(cfg->log_path) - 1] = '\0';
-        } else if (strcmp(key, "heartbeat_interval_sec") == 0) {
+        } else if (strstr(line, "heartbeat_interval_sec:")) {
             cfg->heartbeat_interval_sec = atoi(value);
             if (cfg->heartbeat_interval_sec <= 0)
                 cfg->heartbeat_interval_sec = 5;
-        } else if (strcmp(key, "xdp_enable") == 0) {
+        } else if (strstr(line, "xdp_enable:")) {
             cfg->xdp_enable = parse_bool(value);
-        } else if (strcmp(key, "xdp_interface") == 0) {
+        } else if (strstr(line, "xdp_interface:")) {
             strncpy(cfg->xdp_interface, value, sizeof(cfg->xdp_interface) - 1);
-            cfg->xdp_interface[sizeof(cfg->xdp_interface) - 1] = '\0';
-        } else if (strcmp(key, "xdp_mode") == 0) {
+        } else if (strstr(line, "xdp_mode:")) {
             strncpy(cfg->xdp_mode, value, sizeof(cfg->xdp_mode) - 1);
-            cfg->xdp_mode[sizeof(cfg->xdp_mode) - 1] = '\0';
-        } else if (strcmp(key, "xdp_object_path") == 0) {
-            strncpy(cfg->xdp_object_path, value,
-                    sizeof(cfg->xdp_object_path) - 1);
-            cfg->xdp_object_path[sizeof(cfg->xdp_object_path) - 1] = '\0';
-        } else if (strcmp(key, "xdp_stats_interval_sec") == 0) {
+        } else if (strstr(line, "xdp_object_path:")) {
+            strncpy(cfg->xdp_object_path, value, sizeof(cfg->xdp_object_path) - 1);
+        } else if (strstr(line, "xdp_stats_interval_sec:")) {
             cfg->xdp_stats_interval_sec = atoi(value);
             if (cfg->xdp_stats_interval_sec <= 0)
                 cfg->xdp_stats_interval_sec = 5;
