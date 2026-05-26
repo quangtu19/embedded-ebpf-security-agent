@@ -5,9 +5,21 @@
 
 #define TASK_COMM_LEN 16
 
+/* Event types for trace monitors */
 #define EVENT_PROC_EXEC 1
 #define EVENT_TCP_CONNECT 2
 #define EVENT_SUSPICIOUS_CONNECT 3
+
+/* XDP packet counter indexes */
+#define STAT_TOTAL_PACKETS 0
+#define STAT_TOTAL_BYTES   1
+#define STAT_DROPPED       2
+
+/* XDP protocol counter indexes */
+#define PROTO_TCP    0
+#define PROTO_UDP    1
+#define PROTO_ICMP   2
+#define PROTO_OTHER  3
 
 struct proc_exec_event {
     __u64 ts_ns;
