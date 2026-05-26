@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 #define PIN_DIR "/sys/fs/bpf/ebpf-security-agent"
 #define PIN_PROTOCOL_MAP PIN_DIR "/protocol_count_map"
