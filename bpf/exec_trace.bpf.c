@@ -1,6 +1,5 @@
 #include <linux/bpf.h>
 #include <bpf/bpf_helpers.h>
-
 #include "common.bpf.h"
 
 struct {
@@ -18,9 +17,8 @@ int handle_exec(void *ctx)
     (void)ctx;
 
     e = bpf_ringbuf_reserve(&events, sizeof(*e), 0);
-    if (!e) {
+    if (!e)
         return 0;
-    }
 
     pid_tgid = bpf_get_current_pid_tgid();
     uid_gid = bpf_get_current_uid_gid();
@@ -28,7 +26,6 @@ int handle_exec(void *ctx)
     e->ts_ns = bpf_ktime_get_ns();
     e->pid = pid_tgid >> 32;
     e->uid = (__u32)uid_gid;
-
     bpf_get_current_comm(&e->comm, sizeof(e->comm));
 
     bpf_ringbuf_submit(e, 0);
