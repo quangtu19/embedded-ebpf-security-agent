@@ -1,5 +1,6 @@
 #include "config.h"
 #include "event_logger.h"
+#include "trace_monitor.h"
 #include "xdp_controller.h"
 
 #include <signal.h>
@@ -21,11 +22,14 @@ int main(int argc, char **argv)
     const char *config_path = "config/agent.yaml";
     struct agent_config cfg;
     struct xdp_controller xdp_ctl;
+    struct trace_monitor trace_mon;
     int xdp_started = 0;
+    int trace_started = 0;
     time_t last_heartbeat = 0;
     time_t last_xdp_stats = 0;
 
     memset(&xdp_ctl, 0, sizeof(xdp_ctl));
+    memset(&trace_mon, 0, sizeof(trace_mon));
 
     signal(SIGINT, handle_signal);
     signal(SIGTERM, handle_signal);
@@ -45,14 +49,20 @@ int main(int argc, char **argv)
 
     logger_write("{\"event_type\":\"AGENT_STARTED\",\"severity\":\"INFO\",\"component\":\"agent\"}");
 
+    if (trace_monitor_init(&trace_mon) == 0) {
+        trace_started = 1;
+    } else {
+        logger_write("{\"event_type\":\"TRACE_MONITOR_ATTACH_FAILED\",\"severity\":\"WARNING\",\"component\":\"trace\"}");
+    }
+
     if (cfg.xdp_enable) {
-        if (xdp_controller_init(
-                &xdp_ctl,
-                cfg.xdp_object_path,
-                cfg.xdp_interface,
-                cfg.xdp_mode
-            ) != 0) {
+        if (xdp_controller_init(&xdp_ctl,
+                                cfg.xdp_object_path,
+                                cfg.xdp_interface,
+                                cfg.xdp_mode) != 0) {
             logger_write("{\"event_type\":\"XDP_ATTACH_FAILED\",\"severity\":\"CRITICAL\",\"component\":\"xdp\"}");
+            if (trace_started)
+                trace_monitor_cleanup(&trace_mon);
             logger_close();
             return 1;
         }
@@ -69,13 +79,21 @@ int main(int argc, char **argv)
             last_heartbeat = now;
         }
 
-        if (xdp_started &&
-            now - last_xdp_stats >= cfg.xdp_stats_interval_sec) {
+        if (xdp_started && now - last_xdp_stats >= cfg.xdp_stats_interval_sec) {
             xdp_controller_log_stats(&xdp_ctl);
             last_xdp_stats = now;
         }
 
-        sleep(1);
+        if (trace_started) {
+            trace_monitor_poll(&trace_mon, 100);
+        } else {
+            usleep(100000);
+        }
+    }
+
+    if (trace_started) {
+        trace_monitor_cleanup(&trace_mon);
+        logger_write("{\"event_type\":\"TRACE_MONITOR_DETACHED\",\"severity\":\"INFO\",\"component\":\"trace\"}");
     }
 
     if (xdp_started) {
