@@ -2,44 +2,69 @@
 set -euo pipefail
 
 BASE="docs/evidence/khung10"
-OUT="$BASE/benchmarks/idle_result.txt"
-AGENT_NAME="ebpf-security-agent"
+OUT="$BASE/benchmarks/exec_loss_result.txt"
+EXPECTED="${EXPECTED:-1000}"
 
 mkdir -p "$(dirname "$OUT")"
 
-PID="$(pidof "$AGENT_NAME" | awk '{print $1}' || true)"
+find_log() {
+  for p in \
+    "/var/log/ebpf-security-agent/events.log" \
+    "/opt/ebpf-security-agent/events.log" \
+    "events.log"
+  do
+    if [ -f "$p" ]; then
+      echo "$p"
+      return 0
+    fi
+  done
+  echo "/var/log/ebpf-security-agent/events.log"
+}
+
+LOG="$(find_log)"
+
+count_exec() {
+  grep -c 'PROC_EXEC' "$LOG" 2>/dev/null || true
+}
 
 {
-  echo "=== KHUNG 10 - CPU/RAM idle benchmark ==="
+  echo "=== KHUNG 10 - PROC_EXEC event loss benchmark ==="
   date -Is
+  echo "log=$LOG"
+  echo "expected=$EXPECTED"
   echo
 
-  if [ -z "${PID}" ]; then
-    echo "ERROR: $AGENT_NAME is not running"
-    echo "Run first: sudo systemctl start ebpf-security-agent"
+  if [ ! -f "$LOG" ]; then
+    echo "ERROR: log file not found"
+    echo "Check service/config log_path first."
     exit 1
   fi
 
-  echo "PID=$PID"
-  echo
+  BEFORE="$(count_exec)"
+  echo "before=$BEFORE"
 
-  echo "--- ps RSS/VSZ/CPU/MEM ---"
-  ps -o pid,ppid,%cpu,%mem,rss,vsz,comm -p "$PID" || true
-  echo
+  for i in $(seq 1 "$EXPECTED"); do
+    /bin/true
+  done
 
-  echo "--- top snapshot ---"
-  top -b -n 1 -p "$PID" | head -n 20 || true
-  echo
+  sleep 3
 
-  echo "--- pidstat 1s x 30 ---"
-  if command -v pidstat >/dev/null 2>&1; then
-    pidstat -p "$PID" 1 30 || true
-  else
-    echo "SKIP: pidstat not found. Install: sudo apt install -y sysstat"
-  fi
+  AFTER="$(count_exec)"
+  OBSERVED=$((AFTER - BEFORE))
+  LOSS=$((EXPECTED - OBSERVED))
+
+  echo "after=$AFTER"
+  echo "observed=$OBSERVED"
+  echo "loss=$LOSS"
+
+  awk -v e="$EXPECTED" -v o="$OBSERVED" 'BEGIN {
+    if (e <= 0) exit;
+    rate=((e-o)/e)*100;
+    if (rate < 0) rate=0;
+    printf "loss_rate=%.2f%%\n", rate;
+  }'
 
   echo
-  echo "Target:"
-  echo "- CPU idle overhead: < 5%"
-  echo "- Memory RSS: < 100 MB"
+  echo "Target: loss_rate < 1-3%"
+  echo "Note: If observed=0, current agent may not have PROC_EXEC monitor attached yet."
 } | tee "$OUT"
