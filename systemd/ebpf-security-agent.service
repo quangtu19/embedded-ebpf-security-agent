@@ -1,0 +1,31 @@
+[Unit]
+Description=eBPF/XDP Security Telemetry Agent
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/ebpf-security-agent
+ExecStartPre=/bin/sh -c 'mountpoint -q /sys/fs/bpf || mount -t bpf bpf /sys/fs/bpf'
+ExecStartPre=/bin/sh -c 'mkdir -p /sys/fs/bpf/ebpf-security-agent /var/log/ebpf-security-agent /run/ebpf-security-agent'
+ExecStartPre=/bin/sh -c 'ip link set dev enp0s8 up 2>/dev/null || true'
+ExecStartPre=/bin/sh -c 'ip link set dev enp0s8 xdpgeneric off 2>/dev/null || true; ip link set dev enp0s8 xdp off 2>/dev/null || true'
+ExecStart=/opt/ebpf-security-agent/bin/ebpf-security-agent -c /etc/ebpf-security-agent/agent.yaml
+
+Restart=on-failure
+RestartSec=3
+
+User=root
+Group=root
+
+NoNewPrivileges=true
+ProtectHome=true
+PrivateTmp=true
+ProtectSystem=full
+ReadWritePaths=/var/log/ebpf-security-agent /run/ebpf-security-agent /sys/fs/bpf
+
+CapabilityBoundingSet=CAP_BPF CAP_NET_ADMIN CAP_NET_RAW CAP_PERFMON CAP_SYS_RESOURCE
+AmbientCapabilities=CAP_BPF CAP_NET_ADMIN CAP_NET_RAW CAP_PERFMON CAP_SYS_RESOURCE
+
+[Install]
+WantedBy=multi-user.target
