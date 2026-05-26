@@ -1,0 +1,69 @@
+=== KHUNG 10 - systemd recovery test ===
+2026-05-26T16:03:50+00:00
+
+--- status before kill ---
+● ebpf-security-agent.service - eBPF/XDP Security Telemetry Agent
+     Loaded: loaded (/etc/systemd/system/ebpf-security-agent.service; enabled; preset: enabled)
+     Active: active (running) since Tue 2026-05-26 15:55:17 UTC; 8min ago
+    Process: 3353 ExecStartPre=/bin/sh -c mountpoint -q /sys/fs/bpf || mount -t bpf bpf /sys/fs/bpf (code=exited, status=0/SUCCESS)
+    Process: 3356 ExecStartPre=/bin/sh -c mkdir -p /sys/fs/bpf/ebpf-security-agent /var/log/ebpf-security-agent /run/ebpf-security-agent (code=exited, status=0/SUCCESS)
+    Process: 3359 ExecStartPre=/bin/sh -c ip link set dev enp0s8 up 2>/dev/null || true (code=exited, status=0/SUCCESS)
+    Process: 3362 ExecStartPre=/bin/sh -c ip link set dev enp0s8 xdpgeneric off 2>/dev/null || true; ip link set dev enp0s8 xdp off 2>/dev/null || true (code=exited, status=0/SUCCESS)
+   Main PID: 3366 (ebpf-security-a)
+      Tasks: 1 (limit: 4655)
+     Memory: 392.0K (peak: 1.8M)
+        CPU: 175ms
+     CGroup: /system.slice/ebpf-security-agent.service
+             └─3366 /opt/ebpf-security-agent/bin/ebpf-security-agent -c /etc/ebpf-security-agent/agent.yaml
+
+May 26 15:55:17 ebpf-target systemd[1]: Starting ebpf-security-agent.service - eBPF/XDP Security Telemetry Agent...
+May 26 15:55:17 ebpf-target systemd[1]: Started ebpf-security-agent.service - eBPF/XDP Security Telemetry Agent.
+
+pid_before=3366
+--- kill -9 daemon ---
+
+--- status after kill ---
+● ebpf-security-agent.service - eBPF/XDP Security Telemetry Agent
+     Loaded: loaded (/etc/systemd/system/ebpf-security-agent.service; enabled; preset: enabled)
+     Active: active (running) since Tue 2026-05-26 16:03:53 UTC; 2s ago
+    Process: 4675 ExecStartPre=/bin/sh -c mountpoint -q /sys/fs/bpf || mount -t bpf bpf /sys/fs/bpf (code=exited, status=0/SUCCESS)
+    Process: 4677 ExecStartPre=/bin/sh -c mkdir -p /sys/fs/bpf/ebpf-security-agent /var/log/ebpf-security-agent /run/ebpf-security-agent (code=exited, status=0/SUCCESS)
+    Process: 4681 ExecStartPre=/bin/sh -c ip link set dev enp0s8 up 2>/dev/null || true (code=exited, status=0/SUCCESS)
+    Process: 4683 ExecStartPre=/bin/sh -c ip link set dev enp0s8 xdpgeneric off 2>/dev/null || true; ip link set dev enp0s8 xdp off 2>/dev/null || true (code=exited, status=0/SUCCESS)
+   Main PID: 4687 (ebpf-security-a)
+      Tasks: 1 (limit: 4655)
+     Memory: 404.0K (peak: 1.8M)
+        CPU: 177ms
+     CGroup: /system.slice/ebpf-security-agent.service
+             └─4687 /opt/ebpf-security-agent/bin/ebpf-security-agent -c /etc/ebpf-security-agent/agent.yaml
+
+May 26 16:03:50 ebpf-target systemd[1]: ebpf-security-agent.service: Main process exited, code=killed, status=9/KILL
+May 26 16:03:50 ebpf-target systemd[1]: ebpf-security-agent.service: Failed with result 'signal'.
+May 26 16:03:53 ebpf-target systemd[1]: ebpf-security-agent.service: Scheduled restart job, restart counter is at 1.
+May 26 16:03:53 ebpf-target systemd[1]: Starting ebpf-security-agent.service - eBPF/XDP Security Telemetry Agent...
+May 26 16:03:53 ebpf-target systemd[1]: Started ebpf-security-agent.service - eBPF/XDP Security Telemetry Agent.
+
+--- pid after restart ---
+4687
+
+--- recent journal ---
+May 26 02:52:01 ebpf-target systemd[1]: Starting ebpf-security-agent.service - eBPF/XDP Security Telemetry Agent...
+May 26 02:52:01 ebpf-target systemd[1]: Started ebpf-security-agent.service - eBPF/XDP Security Telemetry Agent.
+May 26 15:19:36 ebpf-target systemd[1]: Stopping ebpf-security-agent.service - eBPF/XDP Security Telemetry Agent...
+May 26 15:19:36 ebpf-target systemd[1]: ebpf-security-agent.service: Deactivated successfully.
+May 26 15:19:36 ebpf-target systemd[1]: Stopped ebpf-security-agent.service - eBPF/XDP Security Telemetry Agent.
+May 26 15:21:33 ebpf-target systemd[1]: Starting ebpf-security-agent.service - eBPF/XDP Security Telemetry Agent...
+May 26 15:21:33 ebpf-target systemd[1]: Started ebpf-security-agent.service - eBPF/XDP Security Telemetry Agent.
+May 26 15:55:17 ebpf-target systemd[1]: Stopping ebpf-security-agent.service - eBPF/XDP Security Telemetry Agent...
+May 26 15:55:17 ebpf-target systemd[1]: ebpf-security-agent.service: Deactivated successfully.
+May 26 15:55:17 ebpf-target systemd[1]: Stopped ebpf-security-agent.service - eBPF/XDP Security Telemetry Agent.
+May 26 15:55:17 ebpf-target systemd[1]: Starting ebpf-security-agent.service - eBPF/XDP Security Telemetry Agent...
+May 26 15:55:17 ebpf-target systemd[1]: Started ebpf-security-agent.service - eBPF/XDP Security Telemetry Agent.
+May 26 16:03:50 ebpf-target systemd[1]: ebpf-security-agent.service: Main process exited, code=killed, status=9/KILL
+May 26 16:03:50 ebpf-target systemd[1]: ebpf-security-agent.service: Failed with result 'signal'.
+May 26 16:03:53 ebpf-target systemd[1]: ebpf-security-agent.service: Scheduled restart job, restart counter is at 1.
+May 26 16:03:53 ebpf-target systemd[1]: Starting ebpf-security-agent.service - eBPF/XDP Security Telemetry Agent...
+May 26 16:03:53 ebpf-target systemd[1]: Started ebpf-security-agent.service - eBPF/XDP Security Telemetry Agent.
+
+Expected:
+- service should become active again because Restart=on-failure is configured.

@@ -1,0 +1,33 @@
+=== KHUNG 10 - XDP blacklist/drop test ===
+2026-05-26T16:06:34+00:00
+iface=enp0s8
+server_ip=192.168.56.10
+client_ip=192.168.1.50
+
+--- stats before ---
+tcp=0 udp=0 icmp=0 other=0 total=0 bytes=0 dropped=0
+
+--- blacklist add ---
+BLACKLIST_ADD ip=192.168.1.50 result=ok
+
+--- blacklist list ---
+192.168.1.50
+
+Now ping this server from client 192.168.1.50 for 15 seconds:
+  ping 192.168.56.10
+
+--- stats during/after blacklist ---
+tcp=0 udp=0 icmp=0 other=0 total=0 bytes=0 dropped=0
+
+--- blacklist remove ---
+BLACKLIST_REMOVE ip=192.168.1.50 result=ok
+
+--- stats after remove ---
+tcp=0 udp=0 icmp=0 other=0 total=0 bytes=0 dropped=0
+
+Expected:
+- During blacklist: client ping should fail or packet drop counter should increase.
+- After remove: client ping should work again.
+
+Note:
+- If command says blacklist_map missing, current XDP program has not implemented blacklist map yet.

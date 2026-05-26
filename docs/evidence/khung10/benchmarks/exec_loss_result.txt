@@ -1,0 +1,12 @@
+=== KHUNG 10 - PROC_EXEC event loss benchmark ===
+2026-05-26T17:47:31+00:00
+log=/var/log/ebpf-security-agent/events.log
+expected=1000
+
+before=14
+after=1017
+observed=1003
+loss=0
+loss_rate=0.00%
+
+Target: loss_rate < 1-3%

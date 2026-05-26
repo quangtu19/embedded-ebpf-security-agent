@@ -1,0 +1,13 @@
+=== KHUNG 10 - TCP_CONNECT event loss benchmark ===
+2026-05-26T17:47:43+00:00
+log=/var/log/ebpf-security-agent/events.log
+target=http://1.1.1.1
+expected=100
+
+before=3
+after=103
+observed=100
+loss=0
+loss_rate=0.00%
+
+Target: loss_rate < 1-3%

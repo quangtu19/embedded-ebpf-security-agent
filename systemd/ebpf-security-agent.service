@@ -8,8 +8,8 @@ Type=simple
 WorkingDirectory=/opt/ebpf-security-agent
 ExecStartPre=/bin/sh -c 'mountpoint -q /sys/fs/bpf || mount -t bpf bpf /sys/fs/bpf'
 ExecStartPre=/bin/sh -c 'mkdir -p /sys/fs/bpf/ebpf-security-agent /var/log/ebpf-security-agent /run/ebpf-security-agent'
-ExecStartPre=/bin/sh -c 'ip link set dev enp0s8 up 2>/dev/null || true'
-ExecStartPre=/bin/sh -c 'ip link set dev enp0s8 xdpgeneric off 2>/dev/null || true; ip link set dev enp0s8 xdp off 2>/dev/null || true'
+ExecStartPre=/bin/sh -c 'ip link set dev enp0s3 up 2>/dev/null || true'
+ExecStartPre=/bin/sh -c 'ip link set dev enp0s3 xdpgeneric off 2>/dev/null || true; ip link set dev enp0s3 xdp off 2>/dev/null || true'
 ExecStart=/opt/ebpf-security-agent/bin/ebpf-security-agent -c /etc/ebpf-security-agent/agent.yaml
 
 Restart=on-failure

@@ -1,0 +1,66 @@
+=== KHUNG 10 - XDP counter consistency benchmark ===
+2026-05-26T16:32:33+00:00
+ping_target=8.8.8.8
+ping_count=20
+
+--- service status ---
+active
+
+--- stats before traffic ---
+tcp=0 udp=0 icmp=0 other=0 total=0 bytes=0 dropped=0
+
+--- generate ICMP traffic ---
+PING 8.8.8.8 (8.8.8.8) 56(84) bytes of data.
+64 bytes from 8.8.8.8: icmp_seq=1 ttl=255 time=71.7 ms
+64 bytes from 8.8.8.8: icmp_seq=2 ttl=255 time=98.6 ms
+64 bytes from 8.8.8.8: icmp_seq=3 ttl=255 time=96.1 ms
+64 bytes from 8.8.8.8: icmp_seq=4 ttl=255 time=65.4 ms
+64 bytes from 8.8.8.8: icmp_seq=6 ttl=255 time=85.1 ms
+64 bytes from 8.8.8.8: icmp_seq=7 ttl=255 time=101 ms
+64 bytes from 8.8.8.8: icmp_seq=8 ttl=255 time=97.3 ms
+64 bytes from 8.8.8.8: icmp_seq=9 ttl=255 time=79.5 ms
+64 bytes from 8.8.8.8: icmp_seq=10 ttl=255 time=74.7 ms
+64 bytes from 8.8.8.8: icmp_seq=11 ttl=255 time=69.2 ms
+64 bytes from 8.8.8.8: icmp_seq=12 ttl=255 time=99.8 ms
+64 bytes from 8.8.8.8: icmp_seq=13 ttl=255 time=73.2 ms
+64 bytes from 8.8.8.8: icmp_seq=14 ttl=255 time=108 ms
+64 bytes from 8.8.8.8: icmp_seq=15 ttl=255 time=107 ms
+64 bytes from 8.8.8.8: icmp_seq=16 ttl=255 time=109 ms
+64 bytes from 8.8.8.8: icmp_seq=17 ttl=255 time=78.3 ms
+64 bytes from 8.8.8.8: icmp_seq=18 ttl=255 time=95.5 ms
+64 bytes from 8.8.8.8: icmp_seq=19 ttl=255 time=94.5 ms
+64 bytes from 8.8.8.8: icmp_seq=20 ttl=255 time=96.5 ms
+
+--- 8.8.8.8 ping statistics ---
+20 packets transmitted, 19 received, 5% packet loss, time 26327ms
+rtt min/avg/max/mdev = 65.418/89.433/108.768/13.708 ms
+
+--- stats after traffic ---
+tcp=0 udp=0 icmp=19 other=1 total=20 bytes=1926 dropped=0
+
+--- bpftool map show ---
+2: prog_array  name hid_jmp_table  flags 0x0
+	key 4B  value 4B  max_entries 1024  memlock 8576B
+	owner_prog_type tracing  owner jited
+8: array  name packet_count_ma  flags 0x0
+	key 4B  value 8B  max_entries 3  memlock 408B
+	btf_id 104
+9: array  name protocol_count_  flags 0x0
+	key 4B  value 8B  max_entries 4  memlock 416B
+	btf_id 104
+10: hash  name blacklist_map  flags 0x0
+	key 4B  value 1B  max_entries 1024  memlock 83296B
+	btf_id 104
+23: array  name packet_count_ma  flags 0x0
+	key 4B  value 8B  max_entries 3  memlock 408B
+	btf_id 150
+24: array  name protocol_count_  flags 0x0
+	key 4B  value 8B  max_entries 4  memlock 416B
+	btf_id 150
+25: hash  name blacklist_map  flags 0x0
+	key 4B  value 1B  max_entries 1024  memlock 83296B
+	btf_id 150
+
+Expected:
+- total/icmp counter should increase after ping if XDP is attached to the correct interface.
+- If counters do not change, check xdp_interface in config/agent.yaml and systemd service.
