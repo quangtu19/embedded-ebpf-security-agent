@@ -69,5 +69,4 @@ fi
 
   echo
   echo "Target: loss_rate < 1-3%"
-  echo "Note: If observed=0, current agent may not have PROC_EXEC monitor attached yet."
 } | tee "$OUT"
