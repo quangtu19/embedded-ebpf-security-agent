@@ -1,10 +1,10 @@
 agent:
-  log_path: events.log
+  log_path: /var/log/ebpf-security-agent/events.log
   heartbeat_interval_sec: 5
 
 xdp:
   xdp_enable: true
   xdp_interface: enp0s8
   xdp_mode: skb
-  xdp_object_path: bpf/xdp_filter.bpf.o
+  xdp_object_path: /opt/ebpf-security-agent/bpf/xdp_filter.bpf.o
   xdp_stats_interval_sec: 5
