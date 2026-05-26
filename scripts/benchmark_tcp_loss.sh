@@ -54,6 +54,9 @@ count_tcp() {
   AFTER="$(count_tcp)"
   OBSERVED=$((AFTER - BEFORE))
   LOSS=$((EXPECTED - OBSERVED))
+if [ "$LOSS" -lt 0 ]; then
+  LOSS=0
+fi
 
   echo "after=$AFTER"
   echo "observed=$OBSERVED"
@@ -68,5 +71,4 @@ count_tcp() {
 
   echo
   echo "Target: loss_rate < 1-3%"
-  echo "Note: If observed=0, current agent may not have TCP_CONNECT monitor attached yet."
 } | tee "$OUT"
