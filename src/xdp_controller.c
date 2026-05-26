@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/resource.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #ifndef XDP_FLAGS_SKB_MODE
@@ -20,6 +21,11 @@
 #ifndef XDP_FLAGS_DRV_MODE
 #define XDP_FLAGS_DRV_MODE (1U << 2)
 #endif
+
+#define PIN_DIR "/sys/fs/bpf/ebpf-security-agent"
+#define PIN_PROTOCOL_MAP PIN_DIR "/protocol_count_map"
+#define PIN_PACKET_MAP PIN_DIR "/packet_count_map"
+#define PIN_BLACKLIST_MAP PIN_DIR "/blacklist_map"
 
 static int bump_memlock_rlimit(void)
 {
@@ -55,6 +61,45 @@ static uint64_t read_u64_counter(int map_fd, uint32_t key)
         return 0;
 
     return value;
+}
+
+static int ensure_pin_dir(void)
+{
+    if (mkdir(PIN_DIR, 0755) != 0 && errno != EEXIST) {
+        perror("mkdir " PIN_DIR);
+        return -1;
+    }
+
+    return 0;
+}
+
+static int pin_map_fd(int fd, const char *path)
+{
+    unlink(path);
+
+    if (bpf_obj_pin(fd, path) != 0) {
+        fprintf(stderr, "failed to pin map to %s: %s\n", path, strerror(errno));
+        return -1;
+    }
+
+    return 0;
+}
+
+static int pin_xdp_maps(struct xdp_controller *ctl)
+{
+    if (ensure_pin_dir() != 0)
+        return -1;
+
+    if (pin_map_fd(ctl->protocol_map_fd, PIN_PROTOCOL_MAP) != 0)
+        return -1;
+
+    if (pin_map_fd(ctl->packet_map_fd, PIN_PACKET_MAP) != 0)
+        return -1;
+
+    if (pin_map_fd(ctl->blacklist_map_fd, PIN_BLACKLIST_MAP) != 0)
+        return -1;
+
+    return 0;
 }
 
 int xdp_controller_init(
@@ -133,6 +178,13 @@ int xdp_controller_init(
         ctl->packet_map_fd < 0 ||
         ctl->blacklist_map_fd < 0) {
         fprintf(stderr, "xdp_controller_init: failed to find XDP maps\n");
+        bpf_object__close(ctl->obj);
+        ctl->obj = NULL;
+        return -1;
+    }
+
+    if (pin_xdp_maps(ctl) != 0) {
+        fprintf(stderr, "xdp_controller_init: failed to pin XDP maps\n");
         bpf_object__close(ctl->obj);
         ctl->obj = NULL;
         return -1;
