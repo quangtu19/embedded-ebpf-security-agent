@@ -52,6 +52,9 @@ count_exec() {
   AFTER="$(count_exec)"
   OBSERVED=$((AFTER - BEFORE))
   LOSS=$((EXPECTED - OBSERVED))
+if [ "$LOSS" -lt 0 ]; then
+  LOSS=0
+fi
 
   echo "after=$AFTER"
   echo "observed=$OBSERVED"
