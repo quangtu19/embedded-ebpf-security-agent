@@ -4,7 +4,7 @@ agent:
 
 xdp:
   xdp_enable: true
-  xdp_interface: enp0s8
+  xdp_interface: enp0s3
   xdp_mode: skb
   xdp_object_path: /opt/ebpf-security-agent/bpf/xdp_filter.bpf.o
   xdp_stats_interval_sec: 5
