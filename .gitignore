@@ -8,3 +8,12 @@ build.log
 *.tmp
 *.swp
 *~
+
+# Local editor/backup artifacts
+*.bak
+*.orig
+*.rej
+*.patch
+.DS_Store
+.vscode/
+.idea/
